@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MindSynth - Text Summarizer & Mind Map Generator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-container">
+    <nav class="topnav">
+      <div class="logo">
+        <i class="fas fa-brain"></i>
+        <span>MindSynth</span>
+      </div>
+      <div class="nav-controls">
+        <button id="theme-toggle" aria-label="Toggle dark mode">
+          <i class="fas fa-moon"></i>
+        </button>
+        <div class="user-menu">
+          <button id="login-btn" class="login-btn">Sign In</button>
+          <div class="user-profile hidden">
+            <div class="avatar">JS</div>
+            <span class="username">User</span>
+            <button id="logout-btn" class="logout-btn">
+              <i class="fas fa-sign-out-alt"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <header>
+        <h1>Transform Text into Visual Knowledge</h1>
+        <p class="app-description">
+          Convert complex information into concise summaries and interactive mind maps. Analyze text faster and retain more information with visual learning.
+        </p>
+      </header>
+
+      <!-- Mobile tabs -->
+      <div class="tabs">
+        <div class="tab active" data-tab="input">
+          <i class="fas fa-keyboard"></i>
+          <span>Input</span>
+        </div>
+        <div class="tab" data-tab="summary">
+          <i class="fas fa-list"></i>
+          <span>Summary</span>
+        </div>
+        <div class="tab" data-tab="mindmap">
+          <i class="fas fa-project-diagram"></i>
+          <span>Mind Map</span>
+        </div>
+      </div>
+
+      <div class="tab-content active" id="tab-input">
+        <div class="input-section">
+          <div class="section-header">
+            <h2 class="section-title">Text Input</h2>
+            <div class="section-controls">
+              <button class="icon-btn" id="paste-btn" title="Paste from clipboard">
+                <i class="fas fa-paste"></i>
+              </button>
+              <button class="icon-btn" id="clear-btn" title="Clear input">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+          <div class="input-container">
+            <textarea id="text-input" placeholder="Paste your text here or write your content..."></textarea>
+            <div class="character-count">
+              <span id="char-count">0</span> characters
+            </div>
+            <div class="sample-texts">
+              <button class="sample-btn" id="sample-text-btn">
+                <i class="fas fa-lightbulb"></i>
+                Try Sample Text
+              </button>
+            </div>
+            <div class="action-buttons">
+              <div class="options-menu">
+                <button class="options-btn" id="options-toggle">
+                  <i class="fas fa-sliders-h"></i>
+                  Options
+                </button>
+                <div class="options-dropdown hidden" id="options-dropdown">
+                  <div class="option-item">
+                    <label for="summary-length">Summary length:</label>
+                    <select id="summary-length">
+                      <option value="3">Brief (3 points)</option>
+                      <option value="5" selected>Standard (5 points)</option>
+                      <option value="8">Detailed (8 points)</option>
+                    </select>
+                  </div>
+                  <div class="option-item">
+                    <label for="analysis-depth">Analysis depth:</label>
+                    <select id="analysis-depth">
+                      <option value="basic">Basic</option>
+                      <option value="advanced" selected>Advanced</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div class="process-buttons">
+                <button id="summarize-btn" class="primary-btn">
+                  <i class="fas fa-list"></i>
+                  <span>Summarize</span>
+                  <div class="loading-spinner hidden" id="summarize-spinner"></div>
+                </button>
+                <button id="generate-btn" class="secondary-btn">
+                  <i class="fas fa-project-diagram"></i>
+                  <span>Generate Mind Map</span>
+                  <div class="loading-spinner hidden" id="generate-spinner"></div>
+                </button>
+              </div>
+            </div>
+            <div id="status-message" class="status-message hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-summary">
+        <div class="summary-section">
+          <div class="section-header">
+            <h2 class="section-title">Summary</h2>
+            <div class="section-controls">
+              <button class="icon-btn" id="copy-summary-btn" title="Copy to clipboard">
+                <i class="fas fa-copy"></i>
+              </button>
+              <button class="icon-btn" id="export-summary-btn" title="Export as PDF">
+                <i class="fas fa-file-export"></i>
+              </button>
+            </div>
+          </div>
+          <div id="summary-content" class="summary-content hidden">
+            <ul class="summary-list" id="summary-list"></ul>
+            <div class="action-message">
+              Generate a mind map from this summary to visualize connections
+            </div>
+            <button id="summary-to-mindmap-btn" class="secondary-btn">
+              <i class="fas fa-project-diagram"></i>
+              <span>Create Mind Map</span>
+            </button>
+          </div>
+          <div id="summary-empty" class="empty-state">
+            <div class="empty-icon">
+              <i class="fas fa-list"></i>
+            </div>
+            <p>No summary yet. Start by summarizing your text.</p>
+            <button id="go-to-input-btn" class="text-btn">
+              <i class="fas fa-keyboard"></i>
+              <span>Go to Input</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-mindmap">
+        <div class="mindmap-section">
+          <div class="section-header">
+            <h2 class="section-title">Mind Map</h2>
+            <div class="section-controls">
+              <button class="icon-btn" id="save-mindmap-btn" title="Save as image">
+                <i class="fas fa-download"></i>
+              </button>
+              <button class="icon-btn" id="share-mindmap-btn" title="Share">
+                <i class="fas fa-share-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div id="mindmap-container">
+            <div id="mindmap-empty" class="empty-state">
+              <div class="empty-icon">
+                <i class="fas fa-project-diagram"></i>
+              </div>
+              <p>No mind map yet. Generate one from your summary.</p>
+              <button id="go-to-summary-btn" class="text-btn">
+                <i class="fas fa-list"></i>
+                <span>Go to Summary</span>
+              </button>
+            </div>
+          </div>
+          <div class="mindmap-controls">
+            <div class="control-btn" id="zoom-in" title="Zoom in">
+              <i class="fas fa-search-plus"></i>
+            </div>
+            <div class="control-btn" id="zoom-out" title="Zoom out">
+              <i class="fas fa-search-minus"></i>
+            </div>
+            <div class="control-btn" id="zoom-reset" title="Reset zoom">
+              <i class="fas fa-expand-arrows-alt"></i>
+            </div>
+            <div class="control-btn" id="fullscreen" title="Fullscreen">
+              <i class="fas fa-expand"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- .container -->
+  </div> <!-- .app-container -->
+
+  <div class="auth-modal hidden" id="auth-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Sign In</h3>
+        <button class="close-btn" id="close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="auth-tabs">
+          <div class="auth-tab active" data-tab="signin">Sign In</div>
+          <div class="auth-tab" data-tab="signup">Sign Up</div>
+        </div>
+        <form id="signin-form" class="auth-form">
+          <div class="form-group">
+            <label for="signin-email">Email</label>
+            <input type="email" id="signin-email" required>
+          </div>
+          <div class="form-group">
+            <label for="signin-password">Password</label>
+            <div class="password-field">
+              <input type="password" id="signin-password" required>
+              <button type="button" class="toggle-password">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group remember-me">
+            <input type="checkbox" id="remember-me">
+            <label for="remember-me">Remember me</label>
+          </div>
+          <button type="submit" class="primary-btn full-width">Sign In</button>
+          <div class="social-login">
+            <p>Or sign in with:</p>
+            <div class="social-buttons">
+              <button type="button" class="social-btn google">
+                <i class="fab fa-google"></i>
+              </button>
+              <button type="button" class="social-btn facebook">
+                <i class="fab fa-facebook-f"></i>
+              </button>
+              <button type="button" class="social-btn twitter">
+                <i class="fab fa-twitter"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+        <form id="signup-form" class="auth-form hidden">
+          <div class="form-group">
+            <label for="signup-name">Full Name</label>
+            <input type="text" id="signup-name" required>
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email</label>
+            <input type="email" id="signup-email" required>
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <div class="password-field">
+              <input type="password" id="signup-password" required>
+              <button type="button" class="toggle-password">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="form-group terms">
+            <input type="checkbox" id="terms" required>
+            <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+          </div>
+          <button type="submit" class="primary-btn full-width">Create Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="tooltip" id="tooltip"></div>
+  <div class="toast hidden" id="toast"></div>
+
+  <footer>
+    <p>© 2025 MindSynth. All rights reserved.</p>
+    <div class="footer-links">
+      <a href="#">About</a>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Contact</a>
+    </div>
+  </footer>
+
+  <script src="backend.js"></script>
+</body>
+</html>
